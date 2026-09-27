@@ -12,13 +12,12 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 
 Document at least 3 bugs you found. Add rows as needed.
 
-| Input | Expected Behavior | Actual Behavior | Console Output / Error | Suspected**Code Location** |
-|-------|-------------------|-----------------|------------------------|------------------------|
-| Guess the number 1 | Either “go HIGHER” or the guess is correct | "go LOWER". It turns out it is possible to get Secret = 0, which shouldn't be allowed, since Secret should be in the range of 1-100. | None |  |
-| Number guessed < Secret or > Secret | Hint should say go higher/lower. | It is reversed. When Number guessed <Secret hint says go lower, and when Number guessed > Secret hint says go higher. | None | check_guess |
-| Keep guessing when there is 2 attempts left | there will be 1 attempt left and the system should allow you to keep guessing if the 2nd last guess is not correct | "Out of attempts!" | None |  |
-| click "New Game" button after finishing a game | The text still says "Game over. Start a new game to try again", even though the Secret is getting refreshed | The text still says "Game over. Start a new game to try again", even though the Secret is getting refreshed | None |  |
-| Change difficulty setting, and then click on new game | Change difficulty between Easy/Normal/Hard, the secret should fall in the specified range | The secret can fall outside of the range when difficulty = easy or normal. | None |  |
+| Input | Expected Behavior | Actual Behavior | Console Output / Error | Suspected **Code Location** | Fixed? |
+|-------|-------------------|-----------------|------------------------|------------------------|------------------------|
+| Number guessed < Secret or > Secret | Hint should say go higher/lower. | It is reversed. When Number guessed <Secret hint says go lower, and when Number guessed > Secret hint says go higher. | None | check_guess | Yes |
+| Keep guessing when there is 2 attempts left | there will be 1 attempt left and the system should allow you to keep guessing if the 2nd last guess is not correct | "Out of attempts!" | None | line 182-187 |  |
+| click "New Game" button after finishing a game | The text still says "Game over. Start a new game to try again", even though the Secret is getting refreshed | The text still says "Game over. Start a new game to try again", even though the Secret is getting refreshed | None |  |  |
+| Change difficulty setting, and then click on new game | Change difficulty between Easy/Normal/Hard, the secret should fall in the specified range | The secret can fall outside of the range when difficulty = easy or normal. | None |  |  |
 
 ---
 
