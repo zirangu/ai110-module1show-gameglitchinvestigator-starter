@@ -1,5 +1,5 @@
 def get_range_for_difficulty(difficulty: str):
-    """Return (low, high) inclusive range for a given difficulty."""
+    """Return (low, high) inclusive range for a given difficulty."""    
     if difficulty == "Easy":
         return 1, 20
     if difficulty == "Normal":
@@ -48,6 +48,7 @@ def check_guess(guess, secret):
 
 def update_score(current_score: int, outcome: str, attempt_number: int):
     """Update score based on outcome and attempt number."""
+
     if outcome == "Win":
         points = 100 - 10 * (attempt_number + 1)
         if points < 10:
@@ -61,5 +62,7 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
 
     if outcome == "Too Low":
         return current_score - 5
+
+
 
     return current_score
