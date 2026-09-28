@@ -31,7 +31,8 @@ if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
 
 if "attempts" not in st.session_state:
-    # st.session_state.attempts = 1
+    # Fix: was initialized to 1, causing an off-by-one that ended the game
+    # one guess early and undercounted "Attempts left" from the first render.
     st.session_state.attempts = 0
 
 
@@ -53,6 +54,9 @@ if st.session_state.status != "playing":
     else:
         st.error("Game over. Start a new game to try again.")
     
+    # Fix: New Game control lives inside the gate (before st.stop()) so the
+    # player isn't stranded with no way to restart once the game ends. Also
+    # resets status and history, which the original handler never cleared.
     if st.button("New Game 🔁"):
         st.session_state.attempts = 0
         st.session_state.secret = random.randint(low, high)
@@ -65,12 +69,9 @@ if st.session_state.status != "playing":
 
 st.subheader("Make a guess")
 
-# st.info(
-#     f"Guess a number between 1 and 100. "
-#     f"Attempts left: {attempt_limit - st.session_state.attempts}"
-# )
-
-
+# Fix: "Attempts left" banner moved to after the `if submit:` block (see
+# bottom of file) so it reflects the post-increment count instead of
+# showing a stale pre-increment value on the loss-triggering render.
 
 raw_guess = st.text_input(
     "Enter your guess:",
@@ -87,6 +88,8 @@ with col3:
 
 if new_game:
     st.session_state.attempts = 0
+    # Fix: was hardcoded to random.randint(1, 100), which ignored the
+    # selected difficulty's range for every mid-session New Game click.
     st.session_state.secret = random.randint(low, high)
     st.success("New game started.")
     st.rerun()
@@ -105,13 +108,11 @@ if submit:
     else:
         st.session_state.history.append(guess_int)
 
-        # if st.session_state.attempts % 2 == 0:
-        #     secret = str(st.session_state.secret)
-        # else:
-        #     secret = st.session_state.secret
+        # Fix: removed the old int/str alternation hack (secret's type used
+        # to flip every other guess), which caused
+        # "TypeError: '>' not supported between instances of 'int' and 'str'"
+        # once check_guess's silent string-fallback branch was dropped.
         outcome, message = check_guess(guess_int, st.session_state.secret)
-
-        # outcome, message = check_guess(guess_int, secret)
 
         if show_hint:
             st.warning(message)
@@ -138,12 +139,18 @@ if submit:
                     f"Score: {st.session_state.score}"
                 )
 
+# Fix: Debug Info expander moved to after the `if submit:` block so
+# "History" reflects the current click's append instead of lagging one
+# render behind (most visible as an empty [] on the very first submit).
 with st.expander("Developer Debug Info"):
     st.write("Secret:", st.session_state.secret)
     st.write("Attempts:", st.session_state.attempts)
     st.write("Score:", st.session_state.score)
     st.write("Difficulty:", difficulty)
     st.write("History:", st.session_state.history)
+
+# Fix: moved here (after `if submit:`) so it shows the post-increment
+# attempts count instead of a stale value from before the submit.
 st.info(
     f"Guess a number between 1 and 100. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
