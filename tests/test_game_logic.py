@@ -108,11 +108,11 @@ def test_update_score_win_floors_at_ten_points():
     assert update_score(current_score=0, outcome="Win", attempt_number=9) == 10
 
 def test_update_score_too_high_even_attempt():
-    # "Too High" on an even attempt number should add 5 points
-    assert update_score(current_score=0, outcome="Too High", attempt_number=2) == 5
+    # "Too High" should always subtract 5 points, regardless of attempt number
+    assert update_score(current_score=0, outcome="Too High", attempt_number=2) == -5
 
 def test_update_score_too_high_odd_attempt():
-    # "Too High" on an odd attempt number should subtract 5 points
+    # "Too High" should always subtract 5 points, regardless of attempt number
     assert update_score(current_score=0, outcome="Too High", attempt_number=3) == -5
 
 def test_update_score_too_low_always_penalized():
