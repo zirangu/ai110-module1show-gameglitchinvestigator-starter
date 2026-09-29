@@ -79,4 +79,22 @@ tests/test_game_logic.py::test_update_score_unrecognized_outcome_leaves_score_un
 
 ## 🚀 Stretch Features
 
-- [ ] [If you choose to complete Challenge 4, describe the Enhanced UI changes here — a screenshot is optional]
+### Enhanced UI (Challenge 4)
+
+**Guess History chart + session summary table** — `render_guess_history()` in [app.py](app.py)
+
+A new helper function, `render_guess_history()`, builds two views from `st.session_state.history` once the game has ended (won or lost):
+- A sidebar bar chart (`st.sidebar.bar_chart`) plotting `Distance = guess - secret` per attempt, color-coded by a `Category` column ("Too Low" / "Too High" / "Correct") built from that distance.
+- A `st.table` "📋 Session Summary" in the main body listing every attempt's guess, result, and Hot/Cold proximity label side by side.
+
+It's called from two places so the chart/table appear immediately, not a click later: the game-over gate at the top of the script, and directly inside `if submit:` at the moment a win/loss is detected.
+
+**Hot/Cold proximity badge** — `get_hot_cold_label(guess, secret, low, high)` in [app.py](app.py)
+
+A new pure function that takes a guess, the secret, and the active difficulty's range, and returns an emoji label based on how close the guess was relative to the range size: `🎯 Bullseye!` (exact), `🔥🔥 Blazing Hot` (≤2% of the range), `🔥 Hot` (≤10%), `🌤️ Warm` (≤25%), or `🧊 Cold` (further). It's appended to the hint text shown after every guess and to each row of the session summary table. It's purely presentational — it doesn't feed into `check_guess` or `update_score`.
+
+**Color-coded hints** — the `if show_hint:` block in `if submit:` in [app.py](app.py)
+
+Previously every hint used a single `st.warning(...)`. Now the hint is routed by `outcome` (still returned unmodified by `check_guess()` in [logic_utils.py](logic_utils.py)): `st.error(...)` (red) for "Too High", `st.info(...)` (blue) for "Too Low", and `st.warning(...)` for a win, with the Hot/Cold badge appended to the message.
+
+None of these changes touch `check_guess`, `update_score`, or `parse_guess` in `logic_utils.py` — all 22 tests in `tests/test_game_logic.py` still pass unmodified.

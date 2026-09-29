@@ -49,31 +49,62 @@ if "history" not in st.session_state:
 
 
 
-# Feature: Guess History sidebar chart, shown only once the game has ended
-# (won or lost). Factored into a function so it can be called both from the
-# game-over gate below and immediately at the moment a win/loss is detected
-# in the `if submit:` block, without needing an extra rerun/click.
+# Feature: Hot/Cold proximity label, purely cosmetic on top of check_guess's
+# existing outcome/message — doesn't change scoring or win/loss logic.
+def get_hot_cold_label(guess: int, secret: int, low: int, high: int) -> str:
+    span = max(high - low, 1)
+    closeness = abs(guess - secret) / span
+    if guess == secret:
+        return "🎯 Bullseye!"
+    if closeness <= 0.02:
+        return "🔥🔥 Blazing Hot"
+    if closeness <= 0.10:
+        return "🔥 Hot"
+    if closeness <= 0.25:
+        return "🌤️ Warm"
+    return "🧊 Cold"
+
+
+# Feature: Guess History sidebar chart + session summary table, shown only
+# once the game has ended (won or lost). Factored into a function so it can
+# be called both from the game-over gate below and immediately at the moment
+# a win/loss is detected in the `if submit:` block, without needing an extra
+# rerun/click.
 def render_guess_history():
     numeric_guesses = [g for g in st.session_state.history if isinstance(g, int)]
     if not numeric_guesses:
         return
-    st.sidebar.subheader("📊 Guess History")
     distances = [g - st.session_state.secret for g in numeric_guesses]
     categories = [
         "Correct" if d == 0 else "Too High" if d > 0 else "Too Low"
         for d in distances
     ]
-    history_df = pd.DataFrame({
+    hot_cold = [
+        get_hot_cold_label(g, st.session_state.secret, low, high)
+        for g in numeric_guesses
+    ]
+
+    st.sidebar.subheader("📊 Guess History")
+    chart_df = pd.DataFrame({
         "Attempt": range(1, len(numeric_guesses) + 1),
         "Distance": distances,
         "Category": categories,
     })
     st.sidebar.bar_chart(
-        history_df,
+        chart_df,
         x="Attempt",
         y="Distance",
         color="Category",
     )
+
+    st.subheader("📋 Session Summary")
+    summary_df = pd.DataFrame({
+        "Attempt": range(1, len(numeric_guesses) + 1),
+        "Guess": numeric_guesses,
+        "Result": categories,
+        "Hot/Cold": hot_cold,
+    })
+    st.table(summary_df.set_index("Attempt"))
 
 
 if st.session_state.status != "playing":
@@ -145,7 +176,18 @@ if submit:
         outcome, message = check_guess(guess_int, st.session_state.secret)
 
         if show_hint:
-            st.warning(message)
+            # Feature: color-code the hint by direction instead of always
+            # using a plain warning, and append a Hot/Cold proximity badge.
+            # Purely presentational — outcome/message still come from the
+            # unmodified check_guess() in logic_utils.py.
+            hot_cold = get_hot_cold_label(guess_int, st.session_state.secret, low, high)
+            hint_text = f"{message} {hot_cold}"
+            if outcome == "Too High":
+                st.error(hint_text)
+            elif outcome == "Too Low":
+                st.info(hint_text)
+            else:
+                st.warning(hint_text)
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
