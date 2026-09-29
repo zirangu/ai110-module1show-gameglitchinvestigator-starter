@@ -1,4 +1,5 @@
 import random
+import pandas as pd
 import streamlit as st
 from logic_utils import get_range_for_difficulty, parse_guess, check_guess, update_score
 
@@ -48,12 +49,41 @@ if "history" not in st.session_state:
 
 
 
+# Feature: Guess History sidebar chart, shown only once the game has ended
+# (won or lost). Factored into a function so it can be called both from the
+# game-over gate below and immediately at the moment a win/loss is detected
+# in the `if submit:` block, without needing an extra rerun/click.
+def render_guess_history():
+    numeric_guesses = [g for g in st.session_state.history if isinstance(g, int)]
+    if not numeric_guesses:
+        return
+    st.sidebar.subheader("📊 Guess History")
+    distances = [g - st.session_state.secret for g in numeric_guesses]
+    categories = [
+        "Correct" if d == 0 else "Too High" if d > 0 else "Too Low"
+        for d in distances
+    ]
+    history_df = pd.DataFrame({
+        "Attempt": range(1, len(numeric_guesses) + 1),
+        "Distance": distances,
+        "Category": categories,
+    })
+    st.sidebar.bar_chart(
+        history_df,
+        x="Attempt",
+        y="Distance",
+        color="Category",
+    )
+
+
 if st.session_state.status != "playing":
     if st.session_state.status == "won":
         st.success("You already won. Start a new game to play again.")
     else:
         st.error("Game over. Start a new game to try again.")
-    
+
+    render_guess_history()
+
     # Fix: New Game control lives inside the gate (before st.stop()) so the
     # player isn't stranded with no way to restart once the game ends. Also
     # resets status and history, which the original handler never cleared.
@@ -130,6 +160,10 @@ if submit:
                 f"You won! The secret was {st.session_state.secret}. "
                 f"Final score: {st.session_state.score}"
             )
+            # Fix: show the Guess History chart right away on the winning
+            # click, instead of waiting for the next rerun to hit the
+            # game-over gate above (which only runs on the *next* script run).
+            render_guess_history()
         else:
             if st.session_state.attempts >= attempt_limit:
                 st.session_state.status = "lost"
@@ -138,6 +172,7 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+                render_guess_history()
 
 # Fix: Debug Info expander moved to after the `if submit:` block so
 # "History" reflects the current click's append instead of lagging one
